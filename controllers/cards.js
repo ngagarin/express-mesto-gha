@@ -46,6 +46,7 @@ const deleteCardById = (req, res) => {
 
   cardModel
     .findByIdAndRemove(cardId)
+    .orFail(() => new Error('NotFound'))
     .then((card) => {
       if (!card) {
         res.status(404).send({
@@ -80,6 +81,7 @@ const likeCard = (req, res) => {
       { $addToSet: { likes: req.user._id } },
       { new: true },
     )
+    .orFail(() => new Error('NotFound'))
     .then((card) => {
       if (!card) {
         res.status(404).send({
@@ -114,6 +116,7 @@ const dislikeCard = (req, res) => {
       { $pull: { likes: req.user._id } },
       { new: true },
     )
+    .orFail(() => new Error('NotFound'))
     .then((card) => {
       if (!card) {
         res.status(404).send({

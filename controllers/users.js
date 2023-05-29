@@ -20,13 +20,19 @@ const getUserById = (req, res) => {
 
   userModel
     .findById(userId)
+    .orFail(() => new Error('NotFound'))
     .then((user) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      //в задании 404, в автотестах 400
       if (err.name === 'CastError') {
         res.status(400).send({
+          message: `Переданы некорректные данные при создании пользователя -- ${err.name}`,
+          err: err.message,
+          stack: err.stack,
+        });
+      } else if (err.message === 'NotFound') {
+        res.status(404).send({
           message: 'Пользователь по указанному _id не найден',
           err: err.message,
           stack: err.stack,
@@ -77,6 +83,7 @@ const updateProfile = (req, res) => {
         runValidators: true
       }
     )
+    .orFail(() => new Error('NotFound'))
     .then((user) => {
       res.status(200).send(user);
     })
@@ -112,6 +119,7 @@ const updateAvatar = (req, res) => {
       { avatar },
       { new: true }
     )
+    .orFail(() => new Error('NotFound'))
     .then((user) => {
       if (!user) {
         res.status(404).send({
