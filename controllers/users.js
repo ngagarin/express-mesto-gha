@@ -72,15 +72,24 @@ const updateProfile = (req, res) => {
   userModel
     .findByIdAndUpdate(req.user._id,
       { name, about },
-      { new: true }
+      {
+        new: true,
+        runValidators: true
+      }
     )
     .then((user) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         res.status(400).send({
           message: `Переданы некорректные данные при обновлении профиля -- ${err.name}`,
+          err: err.message,
+          stack: err.stack,
+        });
+      } else if (err.message === 'NotFound') {
+        res.status(404).send({
+          message: 'Пользователь с указанным _id не найден',
           err: err.message,
           stack: err.stack,
         });
