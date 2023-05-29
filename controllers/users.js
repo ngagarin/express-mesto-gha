@@ -21,19 +21,12 @@ const getUserById = (req, res) => {
   userModel
     .findById(userId)
     .then((user) => {
-      if (!user) {
-        res.status(404).send({
-          message: 'Пользователь по указанному _id не найден',
-          err: 'NotFound',
-        });
-      } else {
-        res.status(200).send(user);
-      }
+      res.status(200).send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({
-          message: `Переданы некорректные данные при создании пользователя -- ${err.name}`,
+        res.status(404).send({
+          message: 'Пользователь по указанному _id не найден',
           err: err.message,
           stack: err.stack,
         });
@@ -56,13 +49,13 @@ const createUser = (req, res) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.name === 'ValidationError') {
         res.status(400).send({
           message: `Переданы некорректные данные при создании пользователя -- ${err.name}`,
           err: err.message,
           stack: err.stack,
         });
-      } else {
+      } else if (err) {
         res.status(500).send({
           message: 'Ошибка по умолчанию.',
           err: err.message,

@@ -25,19 +25,18 @@ const createCard = (req, res) => {
       res.status(200).send(card);
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.name === 'ValidationError') {
         res.status(400).send({
           message: `Переданы некорректные данные при создании карточки -- ${err.name}`,
           err: err.message,
           stack: err.stack,
         });
       } else {
-        res.status(500)
-          .send({
-            message: 'Ошибка по умолчанию.',
-            err: err.message,
-            stack: err.stack,
-          });
+        res.status(500).send({
+          message: 'Ошибка по умолчанию.',
+          err: err.message,
+          stack: err.stack,
+        });
       }
     });
 };
