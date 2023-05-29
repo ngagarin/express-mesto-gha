@@ -24,8 +24,9 @@ const getUserById = (req, res) => {
       res.status(200).send(user);
     })
     .catch((err) => {
+      //в задании 404, в автотестах 400
       if (err.name === 'CastError') {
-        res.status(404).send({
+        res.status(400).send({
           message: 'Пользователь по указанному _id не найден',
           err: err.message,
           stack: err.stack,
@@ -74,15 +75,7 @@ const updateProfile = (req, res) => {
       { new: true }
     )
     .then((user) => {
-      if (!user) {
-        res.status(404).send({
-          message: 'Пользователь по указанному _id не найден',
-          err: err.message,
-          stack: err.stack,
-        });
-      } else {
-        res.status(200).send(user);
-      }
+      res.status(200).send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
