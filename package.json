@@ -8,13 +8,15 @@
     "start": "node app.js",
     "dev": "nodemon app.js",
     "lint": "eslint .",
-    "lint:fox": "eslint . --fix"
+    "lint:fox": "eslint . --fix",
+    "deploy": "gh-pages -d dist"
   },
   "author": "Nikolai Gagarin",
   "license": "ISC",
   "devDependencies": {
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.27.5",
+    "gh-pages": "^5.0.0",
     "nodemon": "^2.0.22"
   },
   "dependencies": {
