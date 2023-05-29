@@ -24,6 +24,13 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     required: true,
+    validate: {
+      validator: function (value) {
+        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+        return urlPattern.test(value);
+      },
+      message: 'Некорректный URL.',
+    },
   },
 });
 
