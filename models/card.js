@@ -4,19 +4,15 @@ const cardSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    validate: {
-      validator: function (value) {
-        return value.length >= 2 && value.length <= 30;
-      },
-      message: 'Название должно быть от 2 до 30 символов.',
-    },
+    minlength: 2,
+    maxlength: 30,
   },
   link: {
     type: String,
     required: true,
     validate: {
-      validator: function (value) {
-        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+      validator(value) {
+        const urlPattern = /^(https?:\/\/)([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
         return urlPattern.test(value);
       },
       message: 'Некорректный URL.',
