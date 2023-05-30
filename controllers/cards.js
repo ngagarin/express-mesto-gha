@@ -1,4 +1,5 @@
 const http2 = require('http2');
+const { CastError, ValidationError } = require('mongoose').Error;
 const cardModel = require('../models/card');
 
 const SUCСESSFUL_REQUEST = 200;
@@ -32,9 +33,9 @@ const createCard = (req, res) => {
     })
     .catch((err) => {
       console.error('Ошибка при создании карточки:', err);
-      if (err.name === 'ValidationError') {
+      if (err instanceof ValidationError) {
         res.status(BAD_REQUEST).send({
-          message: `Переданы некорректные данные при создании карточки -- ${err.name}`,
+          message: `Переданы некорректные данные при создании карточки - ${err.name}`,
         });
       } else {
         res.status(SERVER_ERROR).send({
@@ -55,9 +56,9 @@ const deleteCardById = (req, res) => {
     })
     .catch((err) => {
       console.error('Ошибка при удалении карточки:', err);
-      if (err.name === 'CastError') {
+      if ((err instanceof CastError)) {
         res.status(BAD_REQUEST).send({
-          message: `Переданы некорректные данные при удалении карточки -- ${err.name}`,
+          message: `Переданы некорректные данные при удалении карточки - ${err.name}`,
         });
       } else if (err.message === 'NotFound') {
         res.status(NOT_FOUND).send({
@@ -84,9 +85,9 @@ const likeCard = (req, res) => {
     })
     .catch((err) => {
       console.error('Ошибка при постановке like:', err);
-      if (err.name === 'CastError') {
+      if ((err instanceof CastError)) {
         res.status(BAD_REQUEST).send({
-          message: `Переданы некорректные данные для постановки лайка -- ${err.name}`,
+          message: `Переданы некорректные данные для постановки лайка - ${err.name}`,
         });
       } else if (err.message === 'NotFound') {
         res.status(NOT_FOUND).send({
@@ -113,9 +114,9 @@ const dislikeCard = (req, res) => {
     })
     .catch((err) => {
       console.error('Ошибка при удалении like:', err);
-      if (err.name === 'CastError') {
+      if ((err instanceof CastError)) {
         res.status(BAD_REQUEST).send({
-          message: `Переданы некорректные данные для снятия лайка -- ${err.name}`,
+          message: `Переданы некорректные данные для снятия лайка - ${err.name}`,
         });
       } else if (err.message === 'NotFound') {
         res.status(NOT_FOUND).send({

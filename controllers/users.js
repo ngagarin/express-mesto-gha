@@ -1,4 +1,5 @@
 const http2 = require('http2');
+const { CastError, ValidationError } = require('mongoose').Error;
 const userModel = require('../models/user');
 
 const SUCСESSFUL_REQUEST = 200;
@@ -32,9 +33,9 @@ const getUserById = (req, res) => {
     })
     .catch((err) => {
       console.error('Ошибка при получении пользователя:', err);
-      if (err.name === 'CastError') {
+      if (err instanceof CastError) {
         res.status(BAD_REQUEST).send({
-          message: `Переданы некорректные данные при создании пользователя -- ${err.name}`,
+          message: `Переданы некорректные данные при создании пользователя - ${err.name}`,
         });
       } else if (err.message === 'NotFound') {
         res.status(NOT_FOUND).send({
@@ -58,9 +59,9 @@ const createUser = (req, res) => {
     })
     .catch((err) => {
       console.error('Ошибка при создании пользователя:', err);
-      if (err.name === 'ValidationError') {
+      if (err instanceof ValidationError) {
         res.status(BAD_REQUEST).send({
-          message: `Переданы некорректные данные при создании пользователя -- ${err.name}`,
+          message: `Переданы некорректные данные при создании пользователя - ${err.name}`,
         });
       } else if (err) {
         res.status(SERVER_ERROR).send({
@@ -73,69 +74,77 @@ const createUser = (req, res) => {
 const updateProfile = (req, res) => {
   const { name, about } = req.body;
 
-  userModel
-    .findByIdAndUpdate(
-      req.user._id,
-      { name, about },
-      {
-        new: true,
-        runValidators: true,
-      },
-    )
+  const updateUser = () => userModel.findByIdAndUpdate(
+    req.user._id,
+    { name, about },
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+
+  const handleValidationErrors = (err) => {
+    if (err instanceof ValidationError) {
+      res.status(BAD_REQUEST).send({
+        message: `Переданы некорректные данные при обновлении профиля - ${err.name}`,
+      });
+    } else if (err.message === 'NotFound') {
+      res.status(NOT_FOUND).send({
+        message: 'Пользователь с указанным _id не найден',
+      });
+    } else {
+      res.status(SERVER_ERROR).send({
+        message: 'Ошибка по умолчанию.',
+      });
+    }
+  };
+
+  const handleSuccess = (user) => {
+    res.status(SUCСESSFUL_REQUEST).send(user);
+  };
+
+  updateUser()
     .orFail(() => new Error('NotFound'))
-    .then((user) => {
-      res.status(SUCСESSFUL_REQUEST).send(user);
-    })
-    .catch((err) => {
-      console.error('Ошибка при обновлении пользователя:', err);
-      if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({
-          message: `Переданы некорректные данные при обновлении профиля -- ${err.name}`,
-        });
-      } else if (err.message === 'NotFound') {
-        res.status(NOT_FOUND).send({
-          message: 'Пользователь с указанным _id не найден',
-        });
-      } else {
-        res.status(SERVER_ERROR).send({
-          message: 'Ошибка по умолчанию.',
-        });
-      }
-    });
+    .then(handleSuccess)
+    .catch(handleValidationErrors);
 };
 
 const updateAvatar = (req, res) => {
   const { avatar } = req.body;
 
-  userModel
-    .findByIdAndUpdate(
-      req.user._id,
-      { avatar },
-      {
-        new: true,
-        runValidators: true,
-      },
-    )
+  const updatePicture = () => userModel.findByIdAndUpdate(
+    req.user._id,
+    { avatar },
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+
+  const handleValidationErrors = (err) => {
+    if (err instanceof ValidationError) {
+      res.status(BAD_REQUEST).send({
+        message: `Переданы некорректные данные при обновлении аватара - ${err.name}`,
+      });
+    } else if (err.message === 'NotFound') {
+      res.status(NOT_FOUND).send({
+        message: 'Пользователь по указанному _id не найден',
+      });
+    } else {
+      res.status(SERVER_ERROR).send({
+        message: 'Ошибка по умолчанию.',
+      });
+    }
+  };
+
+  const handleSuccess = (user) => {
+    res.status(SUCСESSFUL_REQUEST).send(user);
+  };
+
+  updatePicture()
     .orFail(() => new Error('NotFound'))
-    .then((user) => {
-      res.status(SUCСESSFUL_REQUEST).send(user);
-    })
-    .catch((err) => {
-      console.error('Ошибка при обновлении аватара:', err);
-      if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({
-          message: `Переданы некорректные данные при обновлении аватара -- ${err.name}`,
-        });
-      } else if (err.message === 'NotFound') {
-        res.status(NOT_FOUND).send({
-          message: 'Пользователь по указанному _id не найден',
-        });
-      } else {
-        res.status(SERVER_ERROR).send({
-          message: 'Ошибка по умолчанию.',
-        });
-      }
-    });
+    .then(handleSuccess)
+    .catch(handleValidationErrors);
 };
 
 module.exports = {
