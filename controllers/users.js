@@ -1,7 +1,7 @@
 const http2 = require('http2');
 const userModel = require('../models/user');
 
-const SUCСESSFUL_REQUEST = http2.constants.HTTP_STATUS_SUCСESSFUL_REQUEST; // 200
+const SUCСESSFUL_REQUEST = 200;
 const CREATED = 201;
 const BAD_REQUEST = http2.constants.HTTP_STATUS_BAD_REQUEST; // 400
 const NOT_FOUND = http2.constants.HTTP_STATUS_NOT_FOUND; // 404
