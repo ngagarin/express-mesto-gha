@@ -18,10 +18,10 @@ router.post('/signup', celebrate({
   body: Joi.object().keys({
     email: Joi.string().email().required(),
     password: Joi.string().required(),
-    name: Joi.string().default('Николай Гагарин').min(2).max(30),
-    about: Joi.string().default('Студент Яндекс.Практикум').min(2).max(30),
+    name: Joi.string().default('Жак-Ив Кусто').min(2).max(30),
+    about: Joi.string().default('Исследователь').min(2).max(30),
     avatar: Joi.string().regex(URL_PATTERN)
-      .default('https://i.pinimg.com/474x/d5/e7/14/d5e71496e78fbb05820c74f21376def8.jpg'),
+      .default('https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png'),
   }),
 }), userController.createUser);
 

@@ -6,19 +6,19 @@ const urlValidator = require('../utils/urlValidator');
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    default: 'Николай Гагарин',
+    default: 'Жак-Ив Кусто',
     minlength: 2,
     maxlength: 30,
   },
   about: {
     type: String,
-    default: 'Студент Яндекс.Практикум',
+    default: 'Исследователь',
     minlength: 2,
     maxlength: 30,
   },
   avatar: {
     type: String,
-    default: 'https://i.pinimg.com/474x/d5/e7/14/d5e71496e78fbb05820c74f21376def8.jpg',
+    default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
     validate: {
       validator: urlValidator,
     },
