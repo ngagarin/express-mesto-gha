@@ -7,13 +7,13 @@ const { validateToken } = require('../middlewares/auth');
 const { URL_PATTERN } = require('../utils/constants');
 const { NotFoundError } = require('../utils/errors/index');
 
-router.post('/sign-in', celebrate({
+router.post('/signin', celebrate({
   body: Joi.object().keys({
     email: Joi.string().email().required(),
     password: Joi.string().required(),
   }),
 }), userController.login);
-router.post('/sign-up', celebrate({
+router.post('/signup', celebrate({
   body: Joi.object().keys({
     email: Joi.string().email().required(),
     password: Joi.string().required(),
