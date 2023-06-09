@@ -11,6 +11,8 @@ router.get('/:userId', celebrate({
   }),
 }), userController.getUserById);
 
+router.get('/me', userController.getUserById);
+
 router.patch('/me', celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30).required(),
