@@ -1,153 +1,125 @@
-const http2 = require('http2');
-const { CastError, ValidationError } = require('mongoose').Error;
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const userModel = require('../models/user');
+const { SECRETKEY } = require('../middlewares/auth');
+const {
+  BadRequestError,
+  NotFoundError,
+  ConflictError,
+  InternalServerError,
+} = require('../utils/errors/index');
+const {
+  SUCСESSFUL_REQUEST,
+  CREATED,
+} = require('../utils/constants');
 
-const SUCСESSFUL_REQUEST = 200;
-const CREATED = 201;
-const BAD_REQUEST = http2.constants.HTTP_STATUS_BAD_REQUEST; // 400
-const NOT_FOUND = http2.constants.HTTP_STATUS_NOT_FOUND; // 404
-const SERVER_ERROR = http2.constants.HTTP_STATUS_SERVER_ERROR; // 500
+const login = (req, res, next) => {
+  const { email, password } = req.body;
 
-const getAllUsers = (req, res) => {
-  userModel
-    .find({})
-    .then((users) => {
-      res.status(SUCСESSFUL_REQUEST).send(users);
+  return userModel
+    .findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, SECRETKEY, { expiresIn: '7d' });
+      res.status(SUCСESSFUL_REQUEST).send({ token });
     })
-    .catch((err) => {
-      console.error('Ошибка при получении списка пользователей:', err);
-      res.status(SERVER_ERROR).send({
-        message: 'Ошибка по умолчанию.',
-      });
-    });
+    .catch(next);
 };
 
-const getUserById = (req, res) => {
-  const { userId } = req.params;
+const getAllUsers = (req, res, next) => {
+  userModel
+    .find({})
+    .then((users) => res.status(SUCСESSFUL_REQUEST).send({ data: users }))
+    .catch(next);
+};
+
+const getUserById = (req, res, next) => {
+  let userId;
+  if (req.params.userId) userId = req.params.userId;
+  else userId = req.user._id;
 
   userModel
     .findById(userId)
-    .orFail(() => new Error('NotFound'))
-    .then((user) => {
-      res.status(SUCСESSFUL_REQUEST).send(user);
-    })
+    .orFail(new NotFoundError(`Пользователь с id:${userId} не найден`))
+    .then((user) => res.status(SUCСESSFUL_REQUEST).send({ data: user }))
     .catch((err) => {
-      console.error('Ошибка при получении пользователя:', err);
-      if (err instanceof CastError) {
-        res.status(BAD_REQUEST).send({
-          message: `Переданы некорректные данные при создании пользователя - ${err.name}`,
-        });
-      } else if (err.message === 'NotFound') {
-        res.status(NOT_FOUND).send({
-          message: 'Пользователь по указанному _id не найден',
-        });
-      } else {
-        res.status(SERVER_ERROR).send({
-          message: 'Ошибка по умолчанию.',
-        });
+      if (err instanceof NotFoundError) {
+        return next(err);
       }
+      if (err instanceof mongoose.Error.CastError) {
+        return next(new BadRequestError('Переданы некорректные данные пользователя'));
+      }
+      return next(new InternalServerError('Произошла ошибка на сервере.'));
     });
 };
 
-const createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-
-  userModel
-    .create({ name, about, avatar })
-    .then((user) => {
-      res.status(CREATED).send(user);
+const createUser = (req, res, next) => {
+  bcrypt
+    .hash(req.body.password, 10)
+    .then((hash) => userModel
+      .create({
+        ...req.body, password: hash,
+      }))
+    .then(({
+      name, about, avatar, email, _id, createdAt,
+    }) => {
+      res.status(CREATED).send(
+        {
+          data: {
+            name, about, avatar, email, _id, createdAt,
+          },
+        },
+      );
     })
     .catch((err) => {
-      console.error('Ошибка при создании пользователя:', err);
-      if (err instanceof ValidationError) {
-        res.status(BAD_REQUEST).send({
-          message: `Переданы некорректные данные при создании пользователя - ${err.name}`,
-        });
-      } else if (err) {
-        res.status(SERVER_ERROR).send({
-          message: 'Ошибка по умолчанию.',
-        });
+      if (err.code === 11000) {
+        return next(new ConflictError('Пользователь с указанным email уже зарегистрирован'));
       }
+      if (err instanceof mongoose.Error.ValidationError) {
+        return next(new BadRequestError('Переданы некорректные данные пользователя'));
+      }
+      return next(new InternalServerError('Произошла ошибка на сервере.'));
     });
 };
 
-const updateProfile = (req, res) => {
+const updateProfile = (req, res, next) => {
   const { name, about } = req.body;
 
-  const updateUser = () => userModel.findByIdAndUpdate(
-    req.user._id,
-    { name, about },
-    {
-      new: true,
-      runValidators: true,
-    },
-  );
-
-  const handleValidationErrors = (err) => {
-    if (err instanceof ValidationError) {
-      res.status(BAD_REQUEST).send({
-        message: `Переданы некорректные данные при обновлении профиля - ${err.name}`,
-      });
-    } else if (err.message === 'NotFound') {
-      res.status(NOT_FOUND).send({
-        message: 'Пользователь с указанным _id не найден',
-      });
-    } else {
-      res.status(SERVER_ERROR).send({
-        message: 'Ошибка по умолчанию.',
-      });
-    }
-  };
-
-  const handleSuccess = (user) => {
-    res.status(SUCСESSFUL_REQUEST).send(user);
-  };
-
-  updateUser()
-    .orFail(() => new Error('NotFound'))
-    .then(handleSuccess)
-    .catch(handleValidationErrors);
+  userModel
+    .findByIdAndUpdate(req.user._id, { name, about }, { new: true })
+    .orFail(new NotFoundError(`Пользователь с id:${req.user._id} не найден`))
+    .then((user) => res.status(SUCСESSFUL_REQUEST).send({ data: user }))
+    .catch((err) => {
+      if (err instanceof NotFoundError) {
+        return next(err);
+      }
+      if (err instanceof mongoose.Error.ValidationError) {
+        return next(new BadRequestError('Переданы некорректные данные пользователя'));
+      }
+      return next(new InternalServerError('Произошла ошибка на сервере.'));
+    });
 };
 
-const updateAvatar = (req, res) => {
+const updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
-  const updatePicture = () => userModel.findByIdAndUpdate(
-    req.user._id,
-    { avatar },
-    {
-      new: true,
-      runValidators: true,
-    },
-  );
-
-  const handleValidationErrors = (err) => {
-    if (err instanceof ValidationError) {
-      res.status(BAD_REQUEST).send({
-        message: `Переданы некорректные данные при обновлении аватара - ${err.name}`,
-      });
-    } else if (err.message === 'NotFound') {
-      res.status(NOT_FOUND).send({
-        message: 'Пользователь по указанному _id не найден',
-      });
-    } else {
-      res.status(SERVER_ERROR).send({
-        message: 'Ошибка по умолчанию.',
-      });
-    }
-  };
-
-  const handleSuccess = (user) => {
-    res.status(SUCСESSFUL_REQUEST).send(user);
-  };
-
-  updatePicture()
-    .orFail(() => new Error('NotFound'))
-    .then(handleSuccess)
-    .catch(handleValidationErrors);
+  userModel
+    .findByIdAndUpdate(req.user._id, { avatar }, { new: true })
+    .orFail(new NotFoundError(`Пользователь с id:${req.user._id} не найден`))
+    .then((user) => res.status(SUCСESSFUL_REQUEST).send({ data: user }))
+    .catch((err) => {
+      if (err instanceof NotFoundError) {
+        return next(err);
+      }
+      if (err instanceof mongoose.Error.ValidationError) {
+        return next(new BadRequestError('Переданы некорректные данные пользователя'));
+      }
+      return next(new InternalServerError('Произошла ошибка на сервере.'));
+    });
 };
 
 module.exports = {
+  login,
   getAllUsers,
   getUserById,
   createUser,
