@@ -13,6 +13,7 @@ router.post('/signin', celebrate({
     password: Joi.string().required(),
   }),
 }), userController.login);
+
 router.post('/signup', celebrate({
   body: Joi.object().keys({
     email: Joi.string().email().required(),
@@ -23,6 +24,7 @@ router.post('/signup', celebrate({
       .default('https://i.pinimg.com/474x/d5/e7/14/d5e71496e78fbb05820c74f21376def8.jpg'),
   }),
 }), userController.createUser);
+
 router.use('/users', validateToken, userRouter);
 router.use('/cards', validateToken, cardRouter);
 router.use('*', (req, res, next) => {
