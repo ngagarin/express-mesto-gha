@@ -25,12 +25,10 @@ router.post('/signup', celebrate({
   }),
 }), userController.createUser);
 
-router.use('/users', validateToken, userRouter);
-router.use('/cards', validateToken, cardRouter);
-router.use('*', (req, res, next) => {
-  const err = new NotFoundError('По указанному пути ничего не найдено');
-  next(err);
-});
+router.use(validateToken);
+router.use('/users', userRouter);
+router.use('/cards', cardRouter);
+router.use('*', (req, res, next) => next(new NotFoundError('По указанному пути ничего не найдено')));
 router.use(errors());
 
 module.exports = router;

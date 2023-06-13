@@ -86,7 +86,7 @@ const updateProfile = (req, res, next) => {
   const { name, about } = req.body;
 
   userModel
-    .findByIdAndUpdate(req.user._id, { name, about }, { new: true })
+    .findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .orFail(new NotFoundError(`Пользователь с id:${req.user._id} не найден`))
     .then((user) => res.status(SUCСESSFUL_REQUEST).send({ data: user }))
     .catch((err) => {
@@ -104,7 +104,7 @@ const updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
   userModel
-    .findByIdAndUpdate(req.user._id, { avatar }, { new: true })
+    .findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
     .orFail(new NotFoundError(`Пользователь с id:${req.user._id} не найден`))
     .then((user) => res.status(SUCСESSFUL_REQUEST).send({ data: user }))
     .catch((err) => {

@@ -7,8 +7,7 @@ const validateToken = (req, res, next) => {
   const { authorization } = req.headers;
 
   if (!authorization || !authorization.startsWith('Bearer ')) {
-    const err = new UnauthorizedError('Необходима авторизация');
-    next(err);
+    return next(new UnauthorizedError('Необходима авторизация'));
   }
 
   const token = authorization.replace('Bearer ', '');
@@ -17,8 +16,7 @@ const validateToken = (req, res, next) => {
   try {
     payload = jwt.verify(token, SECRETKEY);
   } catch (e) {
-    const err = new UnauthorizedError('Необходима авторизация');
-    next(err);
+    return next(new UnauthorizedError('Необходима авторизация'));
   }
 
   req.user = payload;
